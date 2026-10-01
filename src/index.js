@@ -1,11 +1,15 @@
 const express = require('express');
 const config = require('./config');
+const { getDb } = require('./db');
 const { createSlack } = require('./slack');
 const apiRouter = require('./routes');
 const logger = require('./utils/logger');
 
 function createServer() {
   const app = express();
+
+  // Initialize the database + run migrations before serving requests.
+  getDb();
 
   // May be null when Slack credentials are not configured.
   const slack = createSlack();
