@@ -1,0 +1,19 @@
+{
+  "name": "snow-os-reos-backend",
+  "version": "1.0.0",
+  "description": "Snow Art RE.OS Gayrimenkul yonetim ve otomasyon sistemi - V1 backend",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.19.0",
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
