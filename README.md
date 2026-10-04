@@ -49,6 +49,8 @@ altinda dosya ve tablolar (`portfoy`, `musteri`, `kira`) otomatik olusturulur.
 | `GET` | `/api/v1/musteri/:id` | Tekil musteri |
 | `GET` / `POST` | `/api/v1/kira` | Kira sozlesmesi listesi / ekleme |
 | `GET` | `/api/v1/kira/:id` | Tekil kira kaydi |
+| `GET` | `/api/v1/cagri` | Gelen cagrilar ve musteriye giden mesaj durumu |
+| `POST` | `/api/v1/cagri` | Bulutfon cagri mesajini (`{ "text": "..." }`) elle isler |
 
 **Otomatik Slack bildirimi:** `portfoy`, `musteri` veya `kira` kaydi
 olusturuldugunda (ilgili `POST`), Slack yapilandirilmissa varsayilan kanala
@@ -77,3 +79,26 @@ istek URL'sini `https://<sunucu>/slack/events` olarak ayarlayin.
 
 Backend -> Slack yonu icin `/api/v1/notifications` uc noktasi ve yukaridaki
 otomatik domain bildirimleri kullanilir.
+
+### Cagri Sonrasi Musteri Mesajlari (Bulutfon -> Slack -> WhatsApp)
+
+Bulutfon'un Slack kanalina attigi cagri bildirimleri backend tarafindan
+okunur ve arayan numaraya WhatsApp mesaji gonderilir:
+
+- **Cevaplanan cagri** -> karsilama mesaji
+- **Kacan / cevapsiz cagri** -> cevapsiz cagri mesaji
+
+Her cagri `cagri` tablosuna bir kez yazilir (ayni `call_uuid` tekrar gelirse
+atlanir). Ayni numaraya ayni mesaj `CALL_MESSAGE_DEDUPE_HOURS` icinde tekrar
+gonderilmez. Sonuc, Slack'teki cagri mesajinin altina thread olarak yazilir.
+
+Gerekli ayarlar:
+
+1. Slack uygulamasinda `message.channels` event'ine abone olun ve
+   `channels:history` + `chat:write` yetkilerini verin; botu Bulutfon kanalina
+   ekleyin. `SLACK_CALLS_CHANNEL` olarak kanal ID'sini yazin.
+2. `WHATSAPP_TOKEN` ve `WHATSAPP_PHONE_NUMBER_ID` (WhatsApp Cloud API) girin.
+3. Musteriye ilk mesaj 24 saat penceresi disinda oldugu icin Meta onayli
+   sablon gerekir: `WHATSAPP_TEMPLATE_KARSILAMA` ve `WHATSAPP_TEMPLATE_CEVAPSIZ`.
+   Bos birakilirsa duz metin (`CALL_KARSILAMA_TEXT`, `CALL_CEVAPSIZ_TEXT`)
+   gonderilir.

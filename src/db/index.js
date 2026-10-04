@@ -37,6 +37,23 @@ function migrate(database) {
       durum TEXT NOT NULL DEFAULT 'aktif',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS cagri (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      call_uuid TEXT NOT NULL UNIQUE,
+      arayan_telefon TEXT NOT NULL,
+      ofis_telefon TEXT,
+      durum TEXT NOT NULL,
+      cagri_zamani TEXT,
+      sure TEXT,
+      kayit_url TEXT,
+      slack_ts TEXT,
+      musteri_id INTEGER REFERENCES musteri(id),
+      mesaj_tipi TEXT,
+      mesaj_durumu TEXT NOT NULL DEFAULT 'beklemede',
+      mesaj_hata TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 

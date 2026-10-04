@@ -1,4 +1,13 @@
+const config = require('../config');
 const logger = require('../utils/logger');
+const { parseCallMessage } = require('../services/callParser');
+const { handleCall } = require('../services/calls');
+
+const RESULT_TEXT = {
+  gonderildi: (c) => `✅ ${c.mesaj_tipi === 'cevapsiz' ? 'Cevapsiz cagri' : 'Karsilama'} mesaji musteriye gonderildi.`,
+  atlandi: (c) => `⏭️ Mesaj gonderilmedi: ${c.mesaj_hata}`,
+  hata: (c) => `⚠️ Mesaj gonderilemedi: ${c.mesaj_hata}`,
+};
 
 // Slack -> Backend: incoming events and slash commands.
 module.exports = function registerListeners(app) {
@@ -11,6 +20,30 @@ module.exports = function registerListeners(app) {
         'Kullanilabilir komut: `/reos`',
       thread_ts: event.thread_ts || event.ts,
     });
+  });
+
+  // Bulutfon call notifications -> welcome / missed-call WhatsApp to the caller.
+  // Bulutfon posts as a bot, so this listens to every message event (bot
+  // messages included) and keeps only the ones that parse as a call.
+  app.event('message', async ({ event, client }) => {
+    if (event.subtype && event.subtype !== 'bot_message') return;
+    if (config.slack.callsChannel && event.channel !== config.slack.callsChannel) return;
+
+    const parsed = parseCallMessage(event.text);
+    if (!parsed) return;
+
+    const call = await handleCall(parsed, { slackTs: event.ts });
+    if (!call) return;
+
+    try {
+      await client.chat.postMessage({
+        channel: event.channel,
+        thread_ts: event.ts,
+        text: RESULT_TEXT[call.mesaj_durumu](call),
+      });
+    } catch (err) {
+      logger.error('Cagri sonucu Slack thread\'ine yazilamadi:', (err.data && err.data.error) || err.message);
+    }
   });
 
   // Slash command: /reos
